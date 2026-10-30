@@ -572,11 +572,11 @@ onMounted(async () => {
           </template>
 
           <template v-else-if="item.id === 'update'">
-            <Field title="当前版本" note="WCL 0.1.0">
+            <Field title="当前版本" note="WCL 0.2.0">
               <span class="tag real">已是最新</span>
             </Field>
-            <Field title="启动器自更新" note="当前构建不包含自更新通道，升级请手动替换 exe">
-              <span class="tag">手动更新</span>
+            <Field title="启动器自更新" note="启动后自动检查新版本，确认后下载并重启">
+              <span class="tag">自动更新</span>
             </Field>
           </template>
 

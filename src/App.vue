@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { errText } from '@/api'
+import { errText, installLatestUpdate, onLatestAvailable, onLatestProgress } from '@/api'
 import { pageViews, railViews } from '@/router'
+import Modal from '@/ui/primitives/Modal.vue'
 import { useAccountsStore } from '@/store/accounts'
 import { useDownloadsStore } from '@/store/downloads'
 import { useSettingsStore } from '@/store/settings'
@@ -10,7 +11,7 @@ import { useToastStore } from '@/store/toasts'
 import ImportDialogs from '@/components/ImportDialogs.vue'
 import Toasts from '@/components/Toasts.vue'
 import { bridge } from '@/bridge'
-import type { Settings } from '@shared/types'
+import type { LatestUpdateInfo, Settings } from '@shared/types'
 
 const ICONS: Record<string, string> = {
   '/': 'M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-5v-5h-4v5H5a1 1 0 0 1-1-1z',
@@ -146,9 +147,43 @@ async function openImport(path: string) {
 }
 
 let offDropped: (() => void) | undefined
+let offLatest: (() => void) | undefined
+let offLatestProgress: (() => void) | undefined
+
+/** 更新弹窗：本次运行内点「下次再说」后不再对同一版本重复弹出 */
+const updateInfo = ref<LatestUpdateInfo | null>(null)
+const updateWorking = ref(false)
+const updatePercent = ref(0)
+let updateDismissed = ''
+
+function openUpdate(info: LatestUpdateInfo): void {
+  if (!info || info.version === updateDismissed) return
+  updateInfo.value = info
+  updatePercent.value = 0
+  updateWorking.value = false
+}
+
+function laterUpdate(): void {
+  updateDismissed = updateInfo.value?.version ?? updateDismissed
+  updateInfo.value = null
+}
+
+async function installUpdate(): Promise<void> {
+  const info = updateInfo.value
+  if (!info || updateWorking.value) return
+  updateWorking.value = true
+  try {
+    await installLatestUpdate(info)
+  } catch (error) {
+    updateWorking.value = false
+    toasts.push(errText(error), 'error')
+  }
+}
 
 onBeforeUnmount(() => {
   offDropped?.()
+  offLatest?.()
+  offLatestProgress?.()
   if (bgTimer) clearInterval(bgTimer)
 })
 
@@ -158,6 +193,10 @@ onMounted(async () => {
       dropping.value = false
       const paths = Array.isArray(payload) ? (payload as string[]) : []
       if (paths.length) void openImport(paths[0])
+    })
+    offLatest = onLatestAvailable(openUpdate)
+    offLatestProgress = onLatestProgress((p) => {
+      if (p.version === updateInfo.value?.version) updatePercent.value = Math.max(0, Math.min(1, p.percent))
     })
   }
   settings.applyTheme()
@@ -235,7 +274,50 @@ onMounted(async () => {
     </div>
     <div v-if="dropping" class="drop-veil">松开以导入整合包 / 存档</div>
     <ImportDialogs />
+    <Modal :open="!!updateInfo" title="检测到更新版本" width="520px" @close="laterUpdate">
+      <template v-if="updateInfo">
+        <p class="update-line">检测到更新版本 v{{ updateInfo.version }}，是否更新？</p>
+        <pre class="update-notes">{{ updateInfo.notes || '本次更新暂无说明' }}</pre>
+        <p v-if="updateWorking" class="update-progress">
+          {{ updatePercent > 0 ? `正在下载更新 ${Math.round(updatePercent * 100)}%` : '正在准备更新…' }}
+        </p>
+      </template>
+      <template #footer>
+        <button class="btn" :disabled="updateWorking" @click="laterUpdate">下次再说</button>
+        <button class="btn primary" :disabled="updateWorking" @click="installUpdate">
+          {{ updateWorking ? '更新中…' : '立刻更新' }}
+        </button>
+      </template>
+    </Modal>
     <Toasts />
   </div>
 </template>
+
+<style scoped>
+.update-line {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.update-notes {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.update-progress {
+  margin: var(--space-3) 0 0;
+  font-size: 13px;
+  color: var(--accent-text);
+}
+</style>
 

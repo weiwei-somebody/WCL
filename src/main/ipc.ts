@@ -92,6 +92,7 @@ import { launcherLogDebug, launcherLogError, launcherLogInfo, launcherLogWarn } 
 import * as gameFolders from './core/gameFolders'
 import * as selfUpdate from './core/selfUpdate'
 import * as applyUpdate from './core/applyUpdate'
+import * as latestUpdate from './core/latestUpdate'
 import * as instances from './core/instances'
 import * as worlds from './core/worlds'
 import * as yggdrasil from './core/yggdrasil'
@@ -915,6 +916,11 @@ export function registerIpc(getWin: () => BrowserWindow | null): void {
 
   // ---------------- 启动器自更新与版本回退 ----------------
   applyUpdate.setUpdateEmitter(send)
+  ipcMain.handle(IPC.latestCheck, () => latestUpdate.checkLatestJson())
+  ipcMain.handle(IPC.latestInstall, (_e, info: import('../shared/types').LatestUpdateInfo) =>
+    latestUpdate.installLatestUpdate(info, (done, total) => {
+      send(IPC_EVENT.latestProgress, { version: info?.version ?? '', percent: total > 0 ? done / total : 0 })
+    }))
   ipcMain.handle(IPC.updateCheck, async (_e, force?: boolean) => selfUpdate.checkLatest(force === true))
   ipcMain.handle(IPC.updateSkip, (_e, version: string) => {
     settings.saveSettings({ skipUpdateVersion: String(version ?? '') })

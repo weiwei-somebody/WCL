@@ -1,4 +1,4 @@
-import { app, BrowserWindow, crashReporter, shell, ipcMain, net, protocol, type BrowserWindowConstructorOptions } from 'electron'
+import { app, BrowserWindow, crashReporter, shell, ipcMain, net, powerMonitor, protocol, type BrowserWindowConstructorOptions } from 'electron'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { authorizeManagedImage } from './core/appearanceAssets'
@@ -277,43 +277,31 @@ app.whenReady().then(async () => {
 
   // 自动更新计时器只注册一次；游戏状态由每个窗口的 renderer-ready 重放。
   win?.webContents.once('did-finish-load', () => {
-    // 更新：启动自动检查（自动安装模式静默下载；弹窗模式才提示）；已有就绪更新则通知
-    const runUpdateCheck = async () => {
+    // 启动即提醒上次更新结果/已就绪的更新包（不再走 GitHub Release 自动下载）
+    const notifyPending = async () => {
       try {
-        const { checkLatest, decideUpdateAction } = await import('./core/selfUpdate')
         const applyMod = await import('./core/applyUpdate')
-        const { getSettings } = await import('./core/settings')
-        if (applyMod.consumeUpdateFailedFlag()) {
-          win?.webContents.send('event:updatePrompt', { rollbackNotice: true })
-        }
-        // 已有就绪待装的更新（下载完成后等待下次启动）：提醒一次
+        if (applyMod.consumeUpdateFailedFlag()) win?.webContents.send('event:updatePrompt', { rollbackNotice: true })
         const pending = applyMod.getPendingUpdate()
         if (pending) win?.webContents.send('event:updateReady', { version: pending.release.version })
-        const result = await checkLatest(false)
-        if (!result.ok || !result.release) return
-        const s = getSettings()
-        const action = decideUpdateAction({
-          release: result.release,
-          skipVersion: s.skipUpdateVersion,
-          current: app.getVersion(),
-          autoUpdate: s.autoUpdate !== false,
-          supported: applyMod.updateSupported(),
-          downloading: applyMod.isUpdateDownloading(),
-          pendingVersion: pending?.release.version ?? blockedUpdateVersion()
-        })
-        if (action === 'auto-download') {
-          launcherLogInfo('main', `自动安装模式：静默下载更新 v${result.release.version}`)
-          applyMod.startAutoUpdate(result.release, s)
-        } else if (action === 'prompt') {
-          win?.webContents.send('event:updatePrompt', result.release)
-        }
       } catch (e) {
-        launcherLogInfo('main', `启动自动检查更新失败（静默降级）：${e instanceof Error ? e.message : String(e)}`)
+        launcherLogInfo('main', `启动更新状态读取失败（静默降级）：${e instanceof Error ? e.message : String(e)}`)
       }
     }
-    void runUpdateCheck()
-    // 运行中每 6 小时复查一次（与缓存 TTL 对齐；自动模式全程静默）
-    setInterval(() => void runUpdateCheck(), 6 * 3600_000)
+    void notifyPending()
+    // 仓库 latest.json 更新检查：加载完成 10 秒后检查一次；休眠恢复后同样延迟 10 秒再查
+    const runLatestCheck = async () => {
+      try {
+        const { checkLatestJson } = await import('./core/latestUpdate')
+        const info = await checkLatestJson()
+        if (info) win?.webContents.send('event:latestAvailable', info)
+      } catch (e) {
+        launcherLogInfo('main', `latest.json 检查失败（静默降级）：${e instanceof Error ? e.message : String(e)}`)
+      }
+    }
+    setTimeout(() => void runLatestCheck(), 10_000)
+    setInterval(() => void runLatestCheck(), 6 * 3600_000)
+    powerMonitor.on('resume', () => setTimeout(() => void runLatestCheck(), 10_000))
   })
 
   app.on('activate', () => {

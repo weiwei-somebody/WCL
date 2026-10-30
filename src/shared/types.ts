@@ -954,8 +954,21 @@ export const IPC = {
   updateGetConfigStatus: 'update:getConfigStatus', // () => { configVersion: number; current: number; mismatch: 'newer' | null }
   updateResetSettings: 'update:resetSettings', // () => void  配置不兼容时重置设置（先备份原文件）
   updateGetPending: 'update:getPending', // () => { release: ReleaseInfo; file: string } | null  已就绪待安装
-  updateApplyPending: 'update:applyPending' // () => void  立即安装已就绪的更新并重启
+  updateApplyPending: 'update:applyPending', // () => void  立即安装已就绪的更新并重启
+  latestCheck: 'latest:check', // () => LatestUpdateInfo | null  读取仓库 latest.json 并比较版本
+  latestInstall: 'latest:install' // (info: LatestUpdateInfo) => void  下载并立即替换 exe 后重启
 } as const
+
+/** 仓库 latest.json 解析结果（notes 为多行更新说明） */
+export interface LatestUpdateInfo {
+  version: string
+  /** 当前运行版本，用于弹窗对比展示 */
+  current: string
+  notes: string
+  url: string
+  sha256: string
+  size: number
+}
 
 export interface FsEntry {
   name: string
@@ -975,7 +988,9 @@ export const IPC_EVENT = {
   gameDirDone: 'event:gameDirDone', // (r: { ok: boolean; error?: string; gameDir?: string })  目录迁移结束（配置已切换/失败已回滚）
   updatePrompt: 'event:updatePrompt', // (r: ReleaseInfo)  启动自动检查发现新版本 → 弹窗
   updateSlowHint: 'event:updateSlowHint', // (r: { taskId: string })  更新下载连续 30s 低于 100KB/s → 进度界面内嵌提示一次
-  updateReady: 'event:updateReady' // (r: { version: string })  更新已下载校验就绪，关闭启动器时自动安装
+  updateReady: 'event:updateReady', // (r: { version: string })  更新已下载校验就绪，关闭启动器时自动安装
+  latestAvailable: 'event:latestAvailable', // (r: LatestUpdateInfo)  仓库 latest.json 检测到更高版本 → 弹窗
+  latestProgress: 'event:latestProgress' // (r: { version: string; percent: number })  立即更新的下载进度
 } as const
 
 /**

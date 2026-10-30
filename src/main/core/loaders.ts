@@ -621,7 +621,7 @@ const MODRINTH_BASES = [
   'https://api.modrinth.com/v2',
   'https://mod.mcimirror.top/modrinth/v2'
 ]
-const MODRINTH_UA = { 'User-Agent': 'WCL/0.1.0' }
+const MODRINTH_UA = { 'User-Agent': 'WCL/0.2.0' }
 
 interface ModrinthFile {
   url?: string

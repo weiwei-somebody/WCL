@@ -370,6 +370,14 @@ export const onUpdateSlowHint = (cb: (r: { taskId: string }) => void) =>
   subscribe<{ taskId: string }>(IPC_EVENT.updateSlowHint, cb)
 export const onUpdateReady = (cb: (r: { version: string }) => void) =>
   subscribe<{ version: string }>(IPC_EVENT.updateReady, cb)
+export const checkLatestJson = () =>
+  invoke<import('@shared/types').LatestUpdateInfo | null>(IPC.latestCheck)
+export const installLatestUpdate = (info: import('@shared/types').LatestUpdateInfo) =>
+  invoke<void>(IPC.latestInstall, info)
+export const onLatestAvailable = (cb: (r: import('@shared/types').LatestUpdateInfo) => void) =>
+  subscribe<import('@shared/types').LatestUpdateInfo>(IPC_EVENT.latestAvailable, cb)
+export const onLatestProgress = (cb: (r: { version: string; percent: number }) => void) =>
+  subscribe<{ version: string; percent: number }>(IPC_EVENT.latestProgress, cb)
 
 // ---------------- 桥接 MOD 实时配置面板 ----------------
 export const bridgeStatus = (versionId: string) =>
