@@ -1,0 +1,89 @@
+{
+  "name": "wcl",
+  "productName": "WCL",
+  "version": "0.1.0",
+  "description": "WCL - W Craft Launcher",
+  "author": "WCL",
+  "private": true,
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "dev:web": "vite",
+    "build": "vue-tsc --noEmit && electron-vite build && node scripts/build-native.cjs",
+    "build:web": "vue-tsc --noEmit && vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "tsx --test tests/all.test.ts",
+    "dist": "npm run dist:win",
+    "dist:win": "npm run build && electron-builder --win portable --x64 --publish never"
+  },
+  "build": {
+    "appId": "com.wcl.launcher",
+    "productName": "WCL",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/main/**",
+      "out/preload/**",
+      "out/renderer/**",
+      "build/icon.png",
+      "package.json",
+      "!out/**/*.map"
+    ],
+    "asar": true,
+    "compression": "maximum",
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "asarUnpack": [
+      "out/main/WindowMaterial.exe",
+      "out/main/GameWindowFocus.exe",
+      "out/main/wcl-bridge.jar",
+      "out/main/wcl-offline-skin.jar"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "portable"
+      ],
+      "artifactName": "WCL-${version}-windows-${arch}.${ext}"
+    },
+    "portable": {
+      "unpackDirName": false,
+      "artifactName": "WCL-${version}.exe"
+    }
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@types/three": "^0.186.0",
+    "adm-zip": "^0.6.0",
+    "koffi": "^3.2.1",
+    "pinia": "^2.2.6",
+    "skinview-utils": "^0.7.1",
+    "three": "^0.186.1",
+    "undici": "^6.28.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "ws": "^8.22.0",
+    "yauzl": "^3.4.0",
+    "yazl": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/node": "^22.9.0",
+    "@types/ws": "^8.18.2",
+    "@types/yauzl": "^3.4.0",
+    "@types/yazl": "^3.3.1",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^2.3.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vue-tsc": "^2.1.10"
+  }
+}

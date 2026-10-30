@@ -1,0 +1,491 @@
+/** 基础样式：重置、排版、滚动条、通用布局与基础件。 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 窗口级毛玻璃：桌面端把渲染层底色调成半透明，DWM acrylic 才能模糊透出后方窗口 */
+html[data-desktop='1'] body {
+  background-color: var(--shell-tint);
+}
+
+/* 纯色底只留一层柔光，不做整屏渐变 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(34rem 26rem at 78% -18%, var(--aura-1), transparent 70%);
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-line);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.glass {
+  background-color: var(--glass-bg);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  box-shadow: inset 0 1px 0 var(--edge-hi), inset 0 -1px 0 var(--edge-lo);
+}
+
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .glass {
+    background-color: var(--glass-solid);
+  }
+}
+
+/* 自定义窗口背景层：位于主题底色之上、内容与噪点之下 */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.app-shell {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--noise);
+  opacity: var(--grain-op);
+}
+
+.layer {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 无边框窗口的拖拽区：只有桌面版渲染，按钮必须 no-drag 才能接到点击 */
+.titlebar {
+  flex: 0 0 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 0 6px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.titlebar-btn {
+  width: 34px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.titlebar-btn:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.titlebar-btn.close:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.rail {
+  width: var(--rail-w);
+  flex: 0 0 var(--rail-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  background-color: var(--glass-bg-strong);
+  border-right: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  box-shadow: inset -1px 0 0 var(--edge-hi);
+  z-index: 20;
+}
+
+.rail-brand {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--accent);
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  box-shadow: inset 0 1px 0 var(--btn-hi), inset 0 -1px 0 var(--edge-lo), 0 8px 22px var(--accent-glow);
+}
+
+.rail-item {
+  position: relative;
+  width: 46px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.rail-item svg {
+  width: 20px;
+  height: 20px;
+}
+
+.rail-item:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.rail-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.rail-item.active::before {
+  content: '';
+  position: absolute;
+  left: -11px;
+  top: 50%;
+  width: 3px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.rail-spacer {
+  flex: 1;
+}
+
+.rail-item .rail-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 10px;
+  line-height: 1;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.drop-veil {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--mask);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text);
+  font-size: 15px;
+  letter-spacing: 0.4px;
+  z-index: 70;
+  pointer-events: none;
+}
+
+.stage {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--space-5);
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.page-title {
+  position: relative;
+  padding-left: var(--space-3);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.page-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.18em;
+  bottom: 0.18em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.page-note {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  backdrop-filter: blur(var(--glass-blur-soft)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(140%);
+  box-shadow: inset 0 1px 0 var(--edge-hi), inset 0 -1px 0 var(--edge-lo), var(--shadow-1);
+}
+
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .card {
+    background-color: var(--glass-solid);
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-h);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background-color: var(--surface-3);
+  border-color: var(--border-strong);
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+}
+
+.btn:active:not(:disabled) {
+  background-color: var(--surface-2);
+  box-shadow: inset 0 2px 8px var(--edge-lo);
+}
+
+.btn.primary {
+  background-color: var(--accent);
+  border-color: rgba(0, 0, 0, 0.22);
+  color: var(--accent-text);
+  box-shadow: inset 0 1px 0 var(--btn-hi), 0 4px 14px var(--accent-glow);
+}
+
+.btn.primary:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 1px 0 var(--btn-hi), 0 8px 22px var(--accent-glow);
+  filter: brightness(1.06);
+}
+
+.btn.primary:active:not(:disabled) {
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.28);
+  filter: brightness(0.97);
+}
+
+.btn.danger {
+  color: var(--danger);
+  border-color: var(--danger-soft);
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.tag.real {
+  background: transparent;
+  border-color: var(--ok-line);
+  color: var(--ok);
+}
+
+.tag.approx {
+  background: transparent;
+  border-color: var(--warn-line);
+  color: var(--warn);
+}
+
+.tag.bad {
+  background: var(--danger-soft);
+  border-color: var(--danger-line);
+  color: var(--danger);
+}
+
+.tag.mock {
+  background: transparent;
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.tag.desktop {
+  background: transparent;
+  border-color: var(--danger-line);
+  color: var(--danger);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.toasts {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 90;
+}
+
+.toast {
+  min-width: 220px;
+  max-width: 380px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background-color: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  box-shadow: var(--shadow-2);
+  font-size: 13px;
+  animation: toast-in var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+.toast.error {
+  border-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+.toast.ok {
+  border-color: var(--ok-soft);
+  color: var(--ok);
+}

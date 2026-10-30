@@ -1,0 +1,12 @@
+node_modules/
+out/
+dist/
+release/
+bridge/.cache/
+bridge/build/
+offline-skin-agent/build/
+.trae/
+*.log
+*.map
+.DS_Store
+Thumbs.db

@@ -1,0 +1,123 @@
+/** 设计 token：三层变量（原始值 -> 语义 -> 组件），主题切换只改语义层。
+ *  视觉方向「深板岩 + 铜」：冷色石底、暖色铜光，面板为半透明玻璃材质。 */
+:root {
+  color-scheme: dark;
+  --bg: #0b0a09;
+  /* 窗口底色只给一层薄色，DWM acrylic 才能透出后方桌面；浏览器模式由 base.css 覆盖为不透明 */
+  --shell-tint: rgba(11, 10, 9, 0.32);
+  --aura-1: rgba(224, 124, 58, 0.2);
+  --surface: rgba(30, 29, 32, 0.58);
+  --surface-2: rgba(46, 44, 48, 0.62);
+  --surface-3: rgba(62, 59, 64, 0.66);
+  --surface-soft: rgba(255, 244, 230, 0.05);
+  --border: rgba(255, 244, 230, 0.08);
+  --border-strong: rgba(255, 244, 230, 0.18);
+  --text: #f0e9e1;
+  --text-dim: #a9a39a;
+  --text-mute: #7b746c;
+  --accent: #d98b4a;
+  --accent-2: #f2c384;
+  --accent-soft: rgba(217, 139, 74, 0.16);
+  --accent-line: rgba(217, 139, 74, 0.45);
+  --accent-glow: rgba(217, 139, 74, 0.3);
+  --accent-text: #1b1207;
+  --ok: #5cc08c;
+  --ok-soft: rgba(92, 192, 140, 0.14);
+  --ok-line: rgba(92, 192, 140, 0.42);
+  --warn: #d4b45c;
+  --warn-soft: rgba(212, 180, 92, 0.14);
+  --warn-line: rgba(212, 180, 92, 0.42);
+  --danger: #e06a5f;
+  --danger-soft: rgba(224, 106, 95, 0.14);
+  --danger-line: rgba(224, 106, 95, 0.42);
+  --btn-hi: rgba(255, 246, 236, 0.34);
+  --shadow-1: 0 1px 1px rgba(0, 0, 0, 0.42), 0 8px 22px rgba(0, 0, 0, 0.26);
+  --shadow-2: 0 18px 44px rgba(0, 0, 0, 0.46);
+  --shadow-3: 0 30px 72px rgba(0, 0, 0, 0.54);
+  --glass-bg: rgba(32, 30, 34, 0.52);
+  --glass-bg-strong: rgba(21, 20, 23, 0.7);
+  --glass-solid: #1b1a1d;
+  --glass-border: rgba(255, 244, 230, 0.13);
+  --glass-blur: 22px;
+  --glass-blur-soft: 16px;
+  --edge-hi: rgba(255, 246, 236, 0.07);
+  --edge-lo: rgba(0, 0, 0, 0.28);
+  --grain-op: 0.055;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  --mask: rgba(8, 6, 5, 0.58);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #efece7;
+  --shell-tint: rgba(239, 236, 231, 0.2);
+  --aura-1: rgba(214, 124, 58, 0.09);
+  --surface: rgba(255, 255, 255, 0.56);
+  --surface-2: rgba(255, 255, 255, 0.64);
+  --surface-3: rgba(244, 240, 234, 0.74);
+  --surface-soft: rgba(35, 28, 20, 0.045);
+  --border: rgba(35, 28, 20, 0.1);
+  --border-strong: rgba(35, 28, 20, 0.2);
+  --text: #221d18;
+  --text-dim: #5d564d;
+  --text-mute: #8b847a;
+  --accent: #a9601f;
+  --accent-2: #c07f33;
+  --accent-soft: rgba(169, 96, 31, 0.12);
+  --accent-line: rgba(169, 96, 31, 0.4);
+  --accent-glow: rgba(169, 96, 31, 0.22);
+  --accent-text: #fff8ef;
+  --ok: #1f8f63;
+  --ok-soft: rgba(31, 143, 99, 0.12);
+  --ok-line: rgba(31, 143, 99, 0.38);
+  --warn: #8f6d1c;
+  --warn-soft: rgba(143, 109, 28, 0.12);
+  --warn-line: rgba(143, 109, 28, 0.38);
+  --danger: #c0392f;
+  --danger-soft: rgba(192, 57, 47, 0.1);
+  --danger-line: rgba(192, 57, 47, 0.36);
+  --btn-hi: rgba(255, 255, 255, 0.52);
+  --shadow-1: 0 1px 1px rgba(60, 45, 30, 0.06), 0 8px 22px rgba(60, 45, 30, 0.1);
+  --shadow-2: 0 16px 40px rgba(60, 45, 30, 0.16);
+  --shadow-3: 0 28px 64px rgba(60, 45, 30, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-strong: rgba(253, 251, 248, 0.84);
+  --glass-solid: #f7f5f2;
+  --glass-border: rgba(35, 28, 20, 0.1);
+  --glass-blur: 22px;
+  --glass-blur-soft: 16px;
+  --edge-hi: rgba(255, 255, 255, 0.75);
+  --edge-lo: rgba(60, 45, 30, 0.06);
+  --grain-op: 0.07;
+  --mask: rgba(35, 28, 20, 0.3);
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --control-h: 36px;
+  --rail-w: 68px;
+  --font: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-display: 'Bahnschrift', 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI', sans-serif;
+  --font-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, 'Microsoft YaHei UI', monospace;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 180ms;
+  --dur-slow: 320ms;
+}
+
+[data-reduce-motion='true'] *,
+[data-reduce-motion='true'] *::before,
+[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
