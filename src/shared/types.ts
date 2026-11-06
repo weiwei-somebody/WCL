@@ -142,6 +142,22 @@ export interface InstalledVersion {
   folder: string
 }
 
+export interface InstanceMigrationItem {
+  fileName: string
+  kind: 'mod' | 'resourcepack' | 'shader'
+  ok: boolean
+  /** 成功时的目标文件名，失败时为原因 */
+  detail: string
+}
+
+export interface InstanceMigrationResult {
+  source: string
+  target: string
+  items: InstanceMigrationItem[]
+  migrated: number
+  failed: number
+}
+
 export interface IsolationMigrationPlan {
   versionId: string
   source: string
@@ -874,6 +890,7 @@ export const IPC = {
   modsCrossDuplicates: 'mods:crossDuplicates', // (versionIds: string[]) => ModCrossDuplicate[]  跨版本查重
   modsMigrationPlan: 'mods:migrationPlan',
   modsMigrationApply: 'mods:migrationApply',
+  instanceMigrate: 'instance:migrate', // (sourceId: string, targetId: string) => InstanceMigrationResult  按目标实例版本重新匹配资源并安装
   modsCheckUpdates: 'mods:checkUpdates', // (versionId: string) => ModUpdateReport  按 sha1 反查 Modrinth 可更新项
   modsApplyUpdates: 'mods:applyUpdates', // (versionId: string, items: ModUpdateTarget[]) => { fileName, ok, error? }[]
   // 默认按键（启动时同步进实例 options.txt）
@@ -990,7 +1007,8 @@ export const IPC_EVENT = {
   updateSlowHint: 'event:updateSlowHint', // (r: { taskId: string })  更新下载连续 30s 低于 100KB/s → 进度界面内嵌提示一次
   updateReady: 'event:updateReady', // (r: { version: string })  更新已下载校验就绪，关闭启动器时自动安装
   latestAvailable: 'event:latestAvailable', // (r: LatestUpdateInfo)  仓库 latest.json 检测到更高版本 → 弹窗
-  latestProgress: 'event:latestProgress' // (r: { version: string; percent: number })  立即更新的下载进度
+  latestProgress: 'event:latestProgress', // (r: { version: string; percent: number })  立即更新的下载进度
+  instanceMigrateProgress: 'event:instanceMigrateProgress' // (r: { done: number; total: number; text: string })  实例迁移进度
 } as const
 
 /**
@@ -1034,7 +1052,7 @@ export interface CommunityResult {
 /** An identity can open download/metadata without inventing absent search metrics. */
 export type CommunityProjectReference = Pick<CommunityResult, 'source' | 'projectId' | 'title'> & Partial<Pick<CommunityResult, 'slug' | 'originalTitle'>>
 export interface CommunityModProject extends CommunityProjectReference {
-  kind: 'mod'
+  kind: CommunityKind
   iconUrl?: string
   description?: string
   author?: string

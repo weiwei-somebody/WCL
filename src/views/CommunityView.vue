@@ -11,7 +11,7 @@ import Pick from '@/ui/primitives/Pick.vue'
 import Skeleton from '@/ui/primitives/Skeleton.vue'
 import TextInput from '@/ui/primitives/TextInput.vue'
 import Toggle from '@/ui/primitives/Toggle.vue'
-import type { CommunityFile, CommunityKind } from '@shared/types'
+import type { CommunityFile, CommunityKind, CommunitySource } from '@shared/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -144,9 +144,9 @@ async function changeKind(value: CommunityKind) {
   await community.search(true)
 }
 
-async function openProject(projectId: string) {
+async function openProject(projectId: string, source: CommunitySource = 'modrinth') {
   try {
-    await community.openProject(projectId)
+    await community.openProject(projectId, source)
   } catch (error) {
     toasts.push(errText(error), 'error')
   }
@@ -230,7 +230,7 @@ onMounted(async () => {
   <Empty v-else-if="!community.items.length" text="没有匹配的资源" note="换个关键词、类型或版本条件再试。" />
 
   <section v-else class="grid">
-    <article v-for="item in community.items" :key="item.projectId" class="entry card" @click="openProject(item.projectId)">
+    <article v-for="item in community.items" :key="item.projectId" class="entry card" @click="openProject(item.projectId, item.source)">
       <img v-if="item.iconUrl" class="entry-icon" :src="item.iconUrl" :alt="item.title" />
       <div v-else class="entry-icon placeholder">{{ item.title.slice(0, 1) }}</div>
       <div class="entry-body">

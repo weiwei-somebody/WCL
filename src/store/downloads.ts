@@ -24,7 +24,7 @@ import type {
   WorldImportOptions
 } from '@shared/types'
 
-export type DownloadKind = 'version' | 'mod' | 'modpack' | 'world' | 'export'
+export type DownloadKind = 'version' | 'mod' | 'resource' | 'modpack' | 'world' | 'export'
 export type DownloadStatus = 'pending' | 'running' | 'done' | 'error' | 'canceled'
 
 export interface DownloadJob {

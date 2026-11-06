@@ -2,7 +2,7 @@
 
 WCL（W Craft Launcher）是一个面向 Windows 的 Minecraft 启动器，使用 Vue 3 + Electron 构建，界面采用深板岩与铜色的暖色配色和毛玻璃材质。
 
-当前版本为 **0.2.0**，已提供可执行的便携版安装包：[Releases](https://github.com/weiwei-somebody/WCL/releases)。
+当前版本为 **0.3.0**，已提供可执行的便携版安装包：[Releases](https://github.com/weiwei-somebody/WCL/releases)。
 
 ## 功能
 
@@ -94,7 +94,7 @@ npm run build        # 构建主进程、预加载、渲染层，并编译原生
 npm run dist:win     # 构建并生成便携版 exe
 ```
 
-打包产物输出到 `release/`，便携版为 `WCL-0.2.0.exe`。运行后在 exe 同级目录生成 `WCL` 数据文件夹，游戏目录默认使用同级 `.minecraft`；开发环境下仍使用系统默认的 `%APPDATA%` 路径。
+打包产物输出到 `release/`，便携版为 `WCL-0.3.0.exe`。运行后在 exe 同级目录生成 `WCL` 数据文件夹，游戏目录默认使用同级 `.minecraft`；开发环境下仍使用系统默认的 `%APPDATA%` 路径。
 
 ## 说明
 

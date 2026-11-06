@@ -22,6 +22,7 @@ import type {
   ImportProbeResult,
   InstallOptions,
   InstalledVersion,
+  InstanceMigrationResult,
   IsolationMigrationPlan,
   JavaInfo,
   LaunchState,
@@ -186,8 +187,8 @@ export const importWorld = (inputPath: string, options: WorldImportOptions) =>
 // ---------------- 社区资源 ----------------
 export const communitySearch = (q: CommunityQuery) =>
   invoke<CommunitySearchPage>(IPC.communitySearch, q)
-export const communityProject = (source: CommunitySource, projectId: string) =>
-  invoke<CommunityModProject>(IPC.communityProject, source, projectId, 'mod')
+export const communityProject = (source: CommunitySource, projectId: string, kind: CommunityKind = 'mod') =>
+  invoke<CommunityModProject>(IPC.communityProject, source, projectId, kind)
 export const communityFiles = (
   source: CommunitySource,
   projectId: string,
@@ -198,6 +199,12 @@ export const communityDownload = (
   target: { versionId: string; kind: CommunityKind; folder?: string },
   operationId?: string
 ) => invoke<string>(IPC.communityDownload, file, target, operationId)
+
+// ---------------- 实例资源迁移 ----------------
+export const migrateInstance = (sourceId: string, targetId: string) =>
+  invoke<InstanceMigrationResult>(IPC.instanceMigrate, sourceId, targetId)
+export const onInstanceMigrateProgress = (cb: (r: { done: number; total: number; text: string }) => void) =>
+  subscribe<{ done: number; total: number; text: string }>(IPC_EVENT.instanceMigrateProgress, cb)
 
 // ---------------- Java ----------------
 export const listJava = () => invoke<JavaInfo[]>(IPC.javaList)

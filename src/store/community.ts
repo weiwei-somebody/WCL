@@ -166,10 +166,10 @@ export const useCommunityStore = defineStore('community', {
       const filter = this.compatibility
       this.fileFilter = { kind: this.kind, mcVersion: filter.mcVersion, loader: filter.loader }
     },
-    async openProject(projectId: string) {
+    async openProject(projectId: string, source: CommunitySource = 'modrinth') {
       this.projectFiles = []
       this.entryUrl = ''
-      this.project = await communityProject('modrinth', projectId)
+      this.project = await communityProject(source, projectId, this.kind)
       this.syncFilter()
       void this.translateProject()
       await this.loadProjectFiles()
@@ -281,7 +281,7 @@ export const useCommunityStore = defineStore('community', {
       const folder = target.folder
       const label = target.gameDirectory ?? target.folder
       return downloads.enqueue({
-        kind: 'mod',
+        kind: kind === 'mod' ? 'mod' : 'resource',
         title: file.fileName,
         target: label,
         note: withDeps ? `${KIND_LABEL[kind]} · 含 ${required.length} 个必需前置` : KIND_LABEL[kind],

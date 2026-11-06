@@ -23,6 +23,7 @@ const importing = ref(false)
 const KIND_LABEL: Record<string, string> = {
   version: '实例',
   mod: '模组',
+  resource: '资源',
   modpack: '整合包',
   world: '存档',
   export: '导出'

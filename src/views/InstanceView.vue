@@ -10,6 +10,8 @@ import {
   centerWorlds,
   errText,
   getIsolationPlan,
+  migrateInstance,
+  onInstanceMigrateProgress,
   openDir,
   removeFs,
   selectDir,
@@ -32,7 +34,7 @@ import Skeleton from '@/ui/primitives/Skeleton.vue'
 import TextInput from '@/ui/primitives/TextInput.vue'
 import Toggle from '@/ui/primitives/Toggle.vue'
 import type { DiagnosticFinding, InstanceOperation, InstanceOverview, InstanceScreenshot, InstanceWorld } from '@shared/instanceCenter'
-import type { GameWindowMode, InstalledVersion, IsolationMigrationPlan, ModpackExportOptions } from '@shared/types'
+import type { GameWindowMode, InstalledVersion, InstanceMigrationResult, IsolationMigrationPlan, ModpackExportOptions } from '@shared/types'
 
 interface BackupRow {
   path: string
@@ -123,6 +125,11 @@ const javaAuto = ref(true)
 const resWidth = ref(854)
 const resHeight = ref(480)
 const resMode = ref<GameWindowMode>('windowed')
+const migrateOpen = ref(false)
+const migrateTargetId = ref('')
+const migrating = ref(false)
+const migrateText = ref('')
+const migrateResult = ref<InstanceMigrationResult | null>(null)
 
 const id = computed(() => String(route.params.id ?? ''))
 const instance = computed(() => versions.installed.find((row) => row.id === id.value) ?? null)
@@ -130,6 +137,46 @@ const rootFolder = computed(() => instance.value?.folder ?? '')
 const dir = computed(() => instance.value?.gameDirectory ?? instance.value?.folder ?? '')
 const running = computed(() => launch.state?.versionId === id.value && (launch.running || launch.launching))
 const modeOptions = Object.keys(MODE_LABELS).map((value) => ({ value, label: MODE_LABELS[value] }))
+const migrateOptions = computed(() =>
+  versions.installed
+    .filter((row) => row.id !== id.value)
+    .map((row) => ({ value: row.id, label: row.id, hint: `${row.mcVersion}${row.loader ? ` · ${LOADER_LABELS[row.loader] ?? row.loader}` : ''}` }))
+)
+
+function openMigrate() {
+  migrateTargetId.value = migrateOptions.value[0]?.value ?? ''
+  migrateResult.value = null
+  migrateText.value = ''
+  migrateOpen.value = true
+}
+
+async function runMigrate() {
+  if (!migrateTargetId.value) {
+    toasts.push('请先选择要迁移到的目标实例', 'error')
+    return
+  }
+  if (launch.running && launch.state?.versionId === migrateTargetId.value) {
+    toasts.push('目标实例正在运行，请先关闭游戏再迁移', 'error')
+    return
+  }
+  migrating.value = true
+  migrateResult.value = null
+  migrateText.value = '正在读取源实例资源…'
+  const off = onInstanceMigrateProgress((row) => {
+    migrateText.value = row.text
+  })
+  try {
+    migrateResult.value = await migrateInstance(id.value, migrateTargetId.value)
+    const result = migrateResult.value
+    toasts.push(`迁移完成：成功 ${result.migrated} 个，失败 ${result.failed} 个`, result.failed ? 'error' : 'ok')
+    await versions.loadInstalled()
+  } catch (error) {
+    toasts.push(errText(error), 'error')
+  } finally {
+    off()
+    migrating.value = false
+  }
+}
 
 function readDesc(key: string): string {
   try {
@@ -558,6 +605,7 @@ onMounted(reload)
           <button class="btn" :disabled="busy === 'op' || running" @click="openExport">
             导出整合包
           </button>
+          <button class="btn" :disabled="busy === 'op' || migrating" @click="openMigrate">迁移</button>
           <button class="btn" :disabled="busy === 'op'" @click="runOperation({ kind: 'repair', target: { folder: rootFolder, id } }, '登记信息已补全')">
             补全文件
           </button>
@@ -775,6 +823,47 @@ onMounted(reload)
       <button class="btn primary" @click="confirmClone">复制</button>
       <button class="btn" @click="modal = ''">取消</button>
     </div>
+  </Modal>
+
+  <Modal :open="migrateOpen" title="迁移资源到其他实例" width="600px" @close="migrateOpen = false">
+    <Field title="目标实例" note="按目标实例的 Minecraft 版本与加载器重新匹配每个资源，找不到兼容版本的资源会列入失败清单">
+      <Pick
+        v-if="migrateOptions.length"
+        :model-value="migrateTargetId"
+        :options="migrateOptions"
+        @update:model-value="(value) => (migrateTargetId = String(value))"
+      />
+      <p v-else class="page-note">没有其他已安装实例，请先在「游戏版本」页再装一个。</p>
+    </Field>
+    <p v-if="migrating" class="page-note">{{ migrateText || '迁移中…' }}</p>
+    <div v-if="migrateResult" class="migrate-cols">
+      <div>
+        <p class="migrate-head">成功迁移 {{ migrateResult.migrated }} 个</p>
+        <ul class="migrate-list">
+          <li v-for="row in migrateResult.items.filter((item) => item.ok)" :key="`ok-${row.fileName}`">
+            <span class="mono">{{ row.fileName }}</span>
+            <span class="page-note">{{ row.detail }}</span>
+          </li>
+          <li v-if="!migrateResult.migrated" class="page-note">无</li>
+        </ul>
+      </div>
+      <div>
+        <p class="migrate-head">迁移失败 {{ migrateResult.failed }} 个</p>
+        <ul class="migrate-list">
+          <li v-for="row in migrateResult.items.filter((item) => !item.ok)" :key="`fail-${row.fileName}`">
+            <span class="mono">{{ row.fileName }}</span>
+            <span class="page-note">{{ row.detail }}</span>
+          </li>
+          <li v-if="!migrateResult.failed" class="page-note">无</li>
+        </ul>
+      </div>
+    </div>
+    <template #footer>
+      <button class="btn" :disabled="migrating" @click="migrateOpen = false">关闭</button>
+      <button class="btn primary" :disabled="migrating || !migrateOptions.length" @click="runMigrate">
+        {{ migrating ? '迁移中…' : '开始迁移' }}
+      </button>
+    </template>
   </Modal>
 
   <Modal :open="exportOpen" title="导出整合包" width="560px" @close="exportOpen = false">
@@ -1087,5 +1176,36 @@ onMounted(reload)
 
 .btn.danger {
   color: var(--danger);
+}
+
+.migrate-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.migrate-head {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.migrate-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.migrate-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 </style>

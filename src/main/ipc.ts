@@ -591,6 +591,12 @@ export function registerIpc(getWin: () => BrowserWindow | null): void {
     (_e, source: CommunitySource, projectId: string, filter?: { mcVersion?: string; loader?: LoaderName | ''; kind?: CommunityKind }) =>
       community.communityFiles(source, String(projectId ?? ''), filter)
   )
+  ipcMain.handle(IPC.instanceMigrate, async (_e, sourceId: string, targetId: string) => {
+    const { migrateInstance } = await import('./core/instanceMigration')
+    return migrateInstance(sourceId, targetId, (done, total, text) =>
+      send(IPC_EVENT.instanceMigrateProgress, { done, total, text })
+    )
+  })
   ipcMain.handle(
     IPC.communityDownload,
     async (_e, file: CommunityFile, target: { versionId: string; kind: CommunityKind; folder?: string }, operationId?: string) => {
