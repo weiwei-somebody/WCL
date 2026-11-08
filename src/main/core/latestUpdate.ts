@@ -20,8 +20,6 @@ import { atomicUpdateJson, updateMarker, validateUpdatePayload, type UpdateTrans
 import { logScope } from './launcherLog'
 
 const updateLog = logScope('self-update')
-const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO}`
-const MIRROR_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO}`
 
 export type LatestProgress = (done: number, total: number) => void
 
@@ -44,20 +42,39 @@ function notesOf(value: unknown): string {
 }
 
 async function fetchLatestJson(): Promise<LatestJson | null> {
-  const urls = [`${RAW_BASE}/main/latest.json`, `${RAW_BASE}/master/latest.json`, `${MIRROR_BASE}@main/latest.json`, `${MIRROR_BASE}@master/latest.json`]
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-      if (!res.ok) {
-        await res.body?.cancel().catch(() => {})
-        continue
+  const urls = [
+    `https://fastly.jsdelivr.net/gh/${GITHUB_REPO}@main/latest.json`,
+    `https://gh-proxy.com/https://raw.githubusercontent.com/${GITHUB_REPO}/main/latest.json`,
+    `https://ghproxy.net/https://raw.githubusercontent.com/${GITHUB_REPO}/main/latest.json`,
+    `https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@main/latest.json`,
+    `https://raw.githubusercontent.com/${GITHUB_REPO}/main/latest.json`,
+    `https://raw.githubusercontent.com/${GITHUB_REPO}/master/latest.json`
+  ]
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 6_000)
+  const reasons: string[] = []
+  try {
+    const tasks = urls.map(async (url) => {
+      try {
+        const res = await fetch(url, { signal: controller.signal, cache: 'no-store' })
+        if (!res.ok) {
+          await res.body?.cancel().catch(() => {})
+          throw new Error(`HTTP ${res.status}`)
+        }
+        return JSON.parse((await res.text()).replace(/^\uFEFF/, '')) as LatestJson
+      } catch (error) {
+        reasons.push(`${url} → ${error instanceof Error ? error.message : String(error)}`)
+        throw error
       }
-      return JSON.parse((await res.text()).replace(/^\uFEFF/, '')) as LatestJson
-    } catch (error) {
-      updateLog.debug(`读取 latest.json 失败：${url}`, error)
-    }
+    })
+    return await Promise.any(tasks)
+  } catch {
+    updateLog.warn(`读取 latest.json 失败（镜像均不可用）：${reasons.join(' | ')}`)
+    return null
+  } finally {
+    clearTimeout(timer)
+    controller.abort()
   }
-  return null
 }
 
 /** 远端版本高于当前版本时返回更新信息，否则返回 null（网络失败一律静默） */

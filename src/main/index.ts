@@ -289,19 +289,32 @@ app.whenReady().then(async () => {
       }
     }
     void notifyPending()
-    // 仓库 latest.json 更新检查：加载完成 10 秒后检查一次；休眠恢复后同样延迟 10 秒再查
-    const runLatestCheck = async () => {
-      try {
-        const { checkLatestJson } = await import('./core/latestUpdate')
-        const info = await checkLatestJson()
-        if (info) win?.webContents.send('event:latestAvailable', info)
-      } catch (e) {
-        launcherLogInfo('main', `latest.json 检查失败（静默降级）：${e instanceof Error ? e.message : String(e)}`)
+    // 仓库 latest.json 更新检查：加载完成即发起请求（并行镜像，最多 6 秒），10 秒后消费结果弹窗；
+    // 休眠恢复后同样延迟 10 秒再查。
+    let pendingLatest: Promise<import('../shared/types').LatestUpdateInfo | null> | null = null
+    const probeLatest = () => {
+      if (!pendingLatest) {
+        pendingLatest = (async () => {
+          try {
+            const { checkLatestJson } = await import('./core/latestUpdate')
+            return await checkLatestJson()
+          } catch (e) {
+            launcherLogInfo('main', `latest.json 检查失败（静默降级）：${e instanceof Error ? e.message : String(e)}`)
+            return null
+          }
+        })()
       }
+      return pendingLatest
     }
-    setTimeout(() => void runLatestCheck(), 10_000)
-    setInterval(() => void runLatestCheck(), 6 * 3600_000)
-    powerMonitor.on('resume', () => setTimeout(() => void runLatestCheck(), 10_000))
+    const notifyLatest = async (refresh = false) => {
+      if (refresh) pendingLatest = null
+      const info = await probeLatest()
+      if (info) win?.webContents.send('event:latestAvailable', info)
+    }
+    void probeLatest()
+    setTimeout(() => void notifyLatest(), 10_000)
+    setInterval(() => void notifyLatest(true), 6 * 3600_000)
+    powerMonitor.on('resume', () => setTimeout(() => void notifyLatest(true), 10_000))
   })
 
   app.on('activate', () => {

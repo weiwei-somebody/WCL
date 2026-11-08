@@ -1,11 +1,11 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "notes": [
-    "修复社区资源包、光影包、数据包、整合包详情打不开的问题（此前一律按模组校验，误报「不是有效模组」），现在可以正常查看并下载",
-    "下载列表中的资源包、光影包等不再错误显示为模组",
-    "新增实例资源迁移：版本设置页「迁移」可选择目标实例，按目标实例的 Minecraft 版本与加载器重新匹配每个模组、资源包、光影包并下载安装，完成后列出成功与失败的资源及原因"
+    "修复自动更新检查在部分网络下一直不弹窗的问题：改为并行请求多个镜像（jsdelivr fastly、gh-proxy、ghproxy、raw 直连），6 秒内取最快结果，不再被单个不可达地址卡住",
+    "打开启动器时即开始拉取 latest.json，等待 10 秒后直接使用结果弹窗；休眠恢复后同样重新检查",
+    "检查失败时写入启动日志（self-update），便于排查网络原因"
   ],
-  "url": "https://github.com/weiwei-somebody/WCL/releases/download/v0.3.0/WCL-0.3.0.exe",
-  "sha256": "45b6cb42e3750d5834f95dd305139598c489c21684980f4f2450ed7f0b6cd7b0",
-  "size": 96516358
+  "url": "https://github.com/weiwei-somebody/WCL/releases/download/v0.3.1/WCL-0.3.1.exe",
+  "sha256": "25f22baf547d3d7f95a0ddc030b0c2831a6ff8cc8c71bf3f75675abe4f51b125",
+  "size": 96505412
 }
